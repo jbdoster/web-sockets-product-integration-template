@@ -1,0 +1,24 @@
+# Exclude All
+*
+
+# White List
+!.gitignore
+
+!client
+!client/eslint.config.js
+!client/index.html
+!client/package.json
+!client/public
+!client/public/*
+!client/src
+!client/src/**/*
+!client/vite.config.js
+
+!server
+!server/mocks
+!server/mocks/**/*
+!server/package.json
+!server/src
+!server/src/**/*
+!server/tsconfig.json
+!server/tsconfig.package.json

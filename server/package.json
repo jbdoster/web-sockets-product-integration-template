@@ -1,0 +1,11 @@
+{
+	"dependencies": {
+		"@types/ws": "^8.18.0",
+		"typescript": "^5.8.2",
+		"ws": "^8.18.1"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "node build/index.js"
+	}
+}
