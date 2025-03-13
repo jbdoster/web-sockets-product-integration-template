@@ -2,7 +2,10 @@
 *
 
 # White List
+!.env
 !.gitignore
+
+!README.md
 
 !client
 !client/eslint.config.js
@@ -15,9 +18,8 @@
 !client/vite.config.js
 
 !server
-!server/mocks
-!server/mocks/**/*
 !server/package.json
+!server/schema.prisma
 !server/src
 !server/src/**/*
 !server/tsconfig.json

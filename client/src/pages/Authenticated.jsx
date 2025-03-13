@@ -3,9 +3,9 @@ import * as contexts from "../contexts";
 
 const Tabs = ({
         emitEvent,
-        setFirstName,
         setTab,
         tab,
+        sessionId,
     }) =>
     <>
         <button
@@ -35,10 +35,10 @@ const Tabs = ({
                 <button onClick={() => {
                     const firstName = document.getElementById("firstName").value;
                     emitEvent({
-                        event: "UPDATE_USER_PROFILE",
+                        eventKey: "update_user_profile",
                         data: {
                             firstName,
-                        }
+                        },
                     })
                 }}>Update Information</button>
             </div>
@@ -58,12 +58,13 @@ export default () => {
     const {
         emitEvent,
     } = useContext(contexts.WebSocket.Context);
-    const [firstName, setFirstName] = useState("home");
+    const {
+        storageContext,
+    } = useContext(contexts.Storage.Context);
     const [tab, setTab] = useState("home");
     return <Tabs
         emitEvent={emitEvent}
-        firstName={firstName}
-        setFirstName={setFirstName}
+        sessionId={storageContext.sessionId}
         setTab={setTab}
         tab={tab}
     />

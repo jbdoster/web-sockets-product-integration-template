@@ -1,11 +1,17 @@
 {
 	"dependencies": {
+		"@prisma/client": "^6.5.0",
 		"@types/ws": "^8.18.0",
 		"typescript": "^5.8.2",
 		"ws": "^8.18.1"
 	},
+	"devDependencies": {
+		"prisma": "^6.5.0"
+	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "node build/index.js"
+		"dev": "node build/index.js",
+		"orm:generate": "prisma generate",
+		"orm:pull": "prisma db pull"
 	}
 }

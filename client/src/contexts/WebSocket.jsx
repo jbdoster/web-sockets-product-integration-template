@@ -30,7 +30,7 @@ export const Component = ({ children }) => {
     const [socket, setSocket] = useState();
 
     const emitEvent = ({
-        event,
+        eventKey,
         data,
     }) => {
         if (!connected) {
@@ -41,9 +41,10 @@ export const Component = ({ children }) => {
         }
         else {
             const message = {
-                event,
+                eventKey,
                 data,
                 sessionId: storageContext.sessionId,
+                version: parseInt(import.meta.env.VITE_WEB_SOCKET_EVENT_VERSION),
             };
             const encoded = JSON.stringify(message);
             socket.send(encoded);
@@ -51,21 +52,56 @@ export const Component = ({ children }) => {
     }
 
     useEffect(() => {
-        const socket = new WebSocket("ws://localhost:8080");
-        socket.addEventListener("open", (event) => {
-          if (connected) return;
-          setConnected(true);
-          mocks.emitAnalyticsEvent("WEB_SOCKET_CONNECTION_OPENED", event);
-        });
-        
-        socket.addEventListener("message", (event) => {
-          mocks.emitAnalyticsEvent("WEB_SOCKET_MESSAGE_RECEIVED", event);
-          const decoded = JSON.parse(event.data);
-          alert(decoded.data.message)
-        });
+        if (storageContext?.sessionId) {
+            const _socket = new WebSocket("ws://localhost:8080");
 
-        setSocket(socket);
-    }, []);
+            _socket.addEventListener("open", (event) => {
+              if (connected) return;
+
+              setConnected(true);
+
+              const message = JSON.stringify({
+                eventKey: "opened_client_connection",
+                sessionId: storageContext.sessionId,
+              });
+
+              _socket.send(message);
+
+              mocks.emitAnalyticsEvent("WEB_SOCKET_CONNECTION_OPENED", event);
+            });
+            
+            _socket.addEventListener("message", (event) => {
+              mocks.emitAnalyticsEvent("WEB_SOCKET_MESSAGE_RECEIVED", event);
+
+              const decoded = JSON.parse(event.data);
+
+              /**
+               *  TODO
+               *  Trigger data refetch.
+               *  Data refetches can be authenticated and permission scopes can be reduced/controlled.
+               *  Data refetches replace the need for the web socket server to return data from the job.
+               *  We want refetches instead of sending the updated data from the job because different
+               *  I/O can take place during the event subscription jobs (e.g. 1st/3rd party integrations)
+               *  which means we cannot guarantee the data being sent back to the client is secure.
+               *  It is more secure to authenticate data requests exclusively for the relying party
+               *  without all the external sources operating on the data in the middle.
+               */
+              if (decoded.eventKey === "client_request_error") {
+                  alert(decoded.data.userDisplayText)
+              }
+              else if (decoded.eventKey === "client_request_success") {
+                alert(decoded.data.userDisplayText)
+            }
+            });
+    
+            setSocket(_socket);
+        }
+        else {
+            if (socket?.readyState === "OPEN") {
+                socket.close();
+            }
+        }
+    }, [storageContext.sessionId]);
 
     return (
         <Context.Provider

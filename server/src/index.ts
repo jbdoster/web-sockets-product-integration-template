@@ -1,74 +1,79 @@
-import { WebSocketServer } from 'ws';
+import * as mocks from "./core/mocks";
+import * as system from "./core/system";
+import subscriptions from "./core/subscriptions";
+import validation from "./core/event-validation";
+import { EventRules } from "./core/data-access";
+import { UserCommunication } from "./core/events/index";
 
-import * as mocks from "../mocks";
-
-type Message = {
-  event: string;
-  data: Record<string, unknown>;
-  sessionId: string;
-}
-
-const bufferToObject = (buffer: Buffer): Message => {
+const main = async () => {
+  let rules: EventRules.Properties[];
   try {
-    return JSON.parse(buffer.toString("utf-8"));
+      rules = await EventRules.Query.readAll();
   }
-  catch(error) {
-    throw new Error("Could not read websocket message data.");
+  catch(error: any) {
+      console.error("Could not fetch rules: " + error.message);
+      throw new Error("Could not fetch rules.");
   }
-}
 
-const errorEvent = (message: Message) => {
-  const event = {
-    event: "UPDATE_PROFILE_ERROR",
-    data: {
-      message: "Profile could not be updated.",
+  mocks.AuthServer();
+
+  const webSockerServer = new system.WebSocketServer({
+    /**
+     *  Just a mock right now so we can focus on live data.
+     *  A real production implementation could perform various
+     *  operations like:
+     *    - JWKS endpoint JWT signature verification by authorization server
+     *    - session and JWT verification through the database
+     */
+    authCallback: (sessionId) => Promise.resolve(true),
+    eventValidationCallback: (message) => {
+      try {
+        validation(message, rules);
+        return true;
+      }
+      catch(error) {
+        return false;
+      }
     },
-  };
-  return JSON.stringify(event);
+  });
+  
+  /**
+   *  Messages emitted through the memory stream should already
+   *  have been authenticated and validated at this point.
+   */
+  webSockerServer.on("client_message", async (message) => {
+    const job = subscriptions.get(message.eventKey);
+    if (!job) {
+      webSockerServer.emit("client_request_error", {
+        ...message,
+        data: {
+          userDisplayText: "An error occured. Please try again later or reach out to customer support.",
+        }
+      });
+    }
+    else {
+      try {
+        await job(message);
+        const userDisplayText = UserCommunication[message.eventKey].success;
+        webSockerServer.emit("client_request_success", {
+          ...message,
+          data: {
+            userDisplayText,
+          }
+        });
+      }
+      catch (error: any) {
+        console.error("Job error: " + error.message);
+        const userDisplayText = UserCommunication[message.eventKey].error;
+        webSockerServer.emit("client_request_error", {
+          ...message,
+          data: {
+            userDisplayText,
+          }
+        });
+      }
+    }
+  })
 }
 
-const wss = new WebSocketServer({
-  port: 8080,
-});
-
-/**
- * TODO
- * Store connection information in database.
- * Intersect sessionId with web socket ID in database table.
- * This way it can be mapped in memory when the connection opens.
- * Then messages can be routed appropriately.
- */
-wss.on('connection', (ws) => {
-  ws.on('error', console.error);
-
-  ws.on('message', async (buffer: Buffer) => {
-    const message = bufferToObject(buffer);
-    console.log('received: %s', message);
-    const verified = await mocks.JwtVerification(message.sessionId);
-    if (!verified) {
-      // TODO - map error response by event label.
-      ws.send(errorEvent(message));
-      throw new Error("Relying Party ID token not verified by Authorization Server.");
-    }
-
-    // TODO - map function call by event label.
-    try {
-      await mocks.DataAccess.updateProfile(message);
-      const event = {
-        event: "UPDATED_PROFILE",
-        data: {
-          message: "Profile updated!",
-        },
-      };
-      const encoded = JSON.stringify(event);
-      ws.send(encoded);
-    }
-    catch(error) {
-      console.error(error);
-      ws.send(errorEvent(message));
-    }
-  });
-
-});
-
-mocks.AuthServer()
+main();
