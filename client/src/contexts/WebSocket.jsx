@@ -4,15 +4,6 @@ import { Context as StorageContext } from "./Storage"
 
 import * as mocks from "../mocks";
 
-const bufferToObject = (buffer) => {
-    try {
-      return JSON.parse(buffer.toString("utf-8"));
-    }
-    catch(error) {
-      throw new Error("Could not read websocket message data.");
-    }
-  }
-
 export const Context = createContext({});
 
 /**
@@ -28,6 +19,8 @@ export const Component = ({ children }) => {
     } = useContext(StorageContext)
     const [connected, setConnected] = useState(false);
     const [socket, setSocket] = useState();
+
+    const closeSocketConnection = () => socket && socket.close();
 
     const emitEvent = ({
         eventKey,
@@ -96,6 +89,10 @@ export const Component = ({ children }) => {
     
             setSocket(_socket);
         }
+        /**
+         *  The socket connection should only be ready state "OPEN"
+         *  when the user has a valid session ID after signing in.
+         */
         else {
             if (socket?.readyState === "OPEN") {
                 socket.close();
@@ -103,9 +100,24 @@ export const Component = ({ children }) => {
         }
     }, [storageContext.sessionId]);
 
+    useEffect(() => {
+        if (socket) {
+            socket.addEventListener("close", (_) => {
+                console.log("Socket connection closed");
+                setConnected(false);
+            });
+
+            socket.addEventListener("error", (error) => {
+                console.log("Socket connection error" + error?.message);
+                setConnected(false);
+            });
+        }
+    }, [socket]);
+
     return (
         <Context.Provider
             value={{
+                closeSocketConnection,
                 connected,
                 emitEvent,
                 setConnected,

@@ -6,12 +6,23 @@
 		"ws": "^8.18.1"
 	},
 	"devDependencies": {
-		"prisma": "^6.5.0"
+		"nodemon": "^3.1.9",
+		"prisma": "^6.5.0",
+		"ts-node": "^10.9.2"
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "node build/index.js",
-		"orm:generate": "prisma generate",
-		"orm:pull": "prisma db pull"
+		"run:database:container": "docker compose up db --build",
+		"build:server:local": "docker buildx build . --target local --tag server:local",
+		"remove:server:local": "docker rm server || true",
+		"stop:server:local": "docker stop server || true",
+		"init:server:local": "docker run -d -it -w /app -u app --entrypoint sh --name server --volume ./src:/app/src server:local",
+		"run:server:local": "docker exec -w /app -u app -it server sh -c \"pnpm monitor\"",
+		"orm:generate:container": "docker exec -w /app -u app -it server node_modules/.bin/prisma generate --schema schema.docker.prisma",
+		"orm:pull:container": "docker exec -w /app -u app -it server node_modules/.bin/prisma db pull --schema ./schema.docker.prisma",
+		"docker:network:create": "docker network create local || true",
+		"docker:network:connect:database": "docker network connect local postgres || true",
+		"docker:network:connect:server": "docker network connect local server",
+		"monitor": "nodemon -w src src/index.ts"
 	}
 }

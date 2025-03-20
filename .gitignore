@@ -4,7 +4,10 @@
 # White List
 !.env
 !.gitignore
-
+!Dockerfile
+!local.development.sh
+!schema.docker.prisma
+!docker-compose.yml
 !README.md
 
 !client
@@ -24,3 +27,5 @@
 !server/src/**/*
 !server/tsconfig.json
 !server/tsconfig.package.json
+!server/migrations
+!server/migrations/**/*
