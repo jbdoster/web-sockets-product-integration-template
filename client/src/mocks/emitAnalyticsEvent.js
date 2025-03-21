@@ -1,1 +1,1 @@
-export default (label, event) => void 0;
+export const emitAnalyticsEvent = (label, event) => void 0;

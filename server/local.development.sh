@@ -11,6 +11,8 @@ pnpm stop:server:local
 # created containers.
 pnpm remove:server:local
 
+pnpm docker:network:remove
+
 # Build a new container instance.
 pnpm build:server:local
 

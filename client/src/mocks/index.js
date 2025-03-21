@@ -1,2 +1,2 @@
-export { default as emitAnalyticsEvent } from "./emitAnalyticsEvent";
-export { default as login } from "./login";
+export { emitAnalyticsEvent } from "./emitAnalyticsEvent";
+export { login } from "./login";

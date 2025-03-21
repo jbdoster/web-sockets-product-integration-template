@@ -54,7 +54,7 @@ const Tabs = ({
  *  Example page showing that you can do other things as a user
  *  while the update takes place asynchronously. 
  */
-export default () => {
+export const Authenticated = () => {
     const {
         emitEvent,
     } = useContext(contexts.WebSocket.Context);

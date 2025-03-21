@@ -2,7 +2,7 @@ import { useContext } from "react";
 import * as contexts from "../contexts";
 import * as mocks from "../mocks";
 
-export default () => {
+export const Unauthenticated = () => {
     const {
         updateStorageContext
     } = useContext(contexts.Storage.Context);

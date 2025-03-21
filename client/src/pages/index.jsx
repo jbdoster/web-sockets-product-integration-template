@@ -1,2 +1,2 @@
-export { default as Authenticated } from "./Authenticated";
-export { default as Unauthenticated } from "./Unauthenticated";
+export { Authenticated } from "./Authenticated";
+export { Unauthenticated } from "./Unauthenticated";
